@@ -1,0 +1,138 @@
+# --- MacOS / Raylib specific fixes ---
+.DS_Store
+*.dSYM/
+*.dylib
+# Ignore the specific executable names (Unix/Mac executables have no extension)
+main
+game
+sube1
+sube2
+
+# --- Original Rules below ---
+
+# Ignore generated files
+# ...
+
+# Ignore VIM's backup generated files
+*.swp
+*.swo
+*~
+
+# Ignore thumbnails created by windows
+Thumbs.db
+
+# Ignore files build by Visual Studio
+*.pdb
+*.aps
+*.user
+*.vspscc
+*_i.c
+*.i
+*.icf
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+.vs
+
+[Bb]in
+[Dd]ebug/
+*.sbr
+*.sdf
+obj/
+[R]elease/
+_ReSharper*/
+[Tt]est[Rr]esult*
+ipch/
+*.opensdf
+*.db
+*.opendb
+packages/
+!examples/models/resources/models/obj/
+
+# Ignore compiled binaries
+*.o
+*.exe
+*.a
+*.bc
+*.so
+*.so.*
+*.dll
+*.h.pch
+./*.obj
+
+# Emscripten
+emsdk
+
+# Ignore wasm data in examples/
+examples/**/*
+!examples/**/*.*
+!examples/**/*/
+examples/**/*.exe
+examples/**/*.wasm
+examples/**/*.data
+examples/**/*.js
+examples/**/*.html
+examples/**/logs/*
+
+# Ignore files build by xcode
+*.mode*v*
+*.pbxuser
+*.xcbkptlist
+*.xcscheme
+*.xcworkspacedata
+*.xcuserstate
+*.xccheckout
+xcschememanagement.plist
+xcuserdata/
+DerivedData/
+
+# VSCode project
+# NOTE: If you want to save your build tasks to Git, 
+# you should remove the line below (.vscode)
+.vscode
+.clangd
+
+# Jetbrains project
+.idea/
+cmake-build-*/
+
+# CMake stuff
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+cmake_install.cmake
+cmake_uninstall.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+build
+
+# Ignore GNU global tags
+GPATH
+GRTAGS
+GTAGS
+
+# Zig programming language
+.zig-cache/
+zig-cache/
+zig-out/
+build/
+build-*/
+docgen_tmp/
+
+# Tools stuff
+tools/parser/rlparser.exe
+tools/parser/rlparser
+tools/rexm/rexm.exe
+tools/rexm/rexm
+
+# CI
+emsdk-cache/
+raylib.com/
