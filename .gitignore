@@ -95,7 +95,7 @@ DerivedData/
 # VSCode project
 # NOTE: If you want to save your build tasks to Git, 
 # you should remove the line below (.vscode)
-.vscode
+#.vscode
 .clangd
 
 # Jetbrains project
