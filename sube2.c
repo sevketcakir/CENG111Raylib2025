@@ -8,6 +8,7 @@ typedef struct arac {
     Rectangle konum;
     Color renk;
     bool aktif;
+    int dokuIndeksi;
 } Arac;
 
 typedef struct oyun
@@ -16,7 +17,20 @@ typedef struct oyun
     Arac rakipler[RAKIP_SAYISI];
     bool oyunDurumu;
     int skor;
+    Texture2D doku;
 } Oyun;
+
+Rectangle arac_koordinat[] = {
+    { 2800, 60, 1100, 2340 },
+    { 1698, 213, 1002, 2187 },
+    { 3950, 405, 1000, 1995 },
+    { 900, 843, 600, 1557 },
+    { 100, 992, 700, 1408 },
+    { 400, 2762, 1000, 2188 },
+    { 4150, 3005, 800, 1945 },
+    { 3000, 3032, 800, 1918 },
+    { 1800, 3035, 900, 1915 },
+};
 
 void oyuncuGuncelle(Oyun *oyun) {
     if(IsKeyDown(KEY_LEFT))
@@ -30,11 +44,21 @@ void oyuncuGuncelle(Oyun *oyun) {
 }
 
 void oyuncuCizdir(Oyun *oyun) {
-    DrawRectangleRec(oyun->oyuncu.konum, BLUE);
+    //DrawRectangleRec(oyun->oyuncu.konum, BLUE);
+    DrawTexturePro(oyun->doku, 
+        arac_koordinat[oyun->oyuncu.dokuIndeksi],
+        oyun->oyuncu.konum,
+        (Vector2) {0,0},
+        0.0f,
+        RAYWHITE
+    );
 }
 
 void oyuncuBaslat(Oyun *oyun) {
-    oyun->oyuncu.konum = (Rectangle) {GENISLIK/2-50, YUKSEKLIK-150, 100, 150};
+    oyun->oyuncu.dokuIndeksi = 0;
+    oyun->oyuncu.konum = (Rectangle) {GENISLIK/2-50, YUKSEKLIK-arac_koordinat[oyun->oyuncu.dokuIndeksi].height / 10.0f, 
+    arac_koordinat[oyun->oyuncu.dokuIndeksi].width / 10.0f, 
+    arac_koordinat[oyun->oyuncu.dokuIndeksi].height / 10.0f};
 }
 void seritCizdir() {
     DrawRectangle(GENISLIK / 3, 0, 5, YUKSEKLIK, RAYWHITE);
@@ -44,18 +68,22 @@ void seritCizdir() {
 void rakipOlustur(Oyun *oyun) {
     int rastgele = GetRandomValue(0, 100);
     Color renkler[] = {YELLOW, RED, GREEN};
-    if(rastgele < 2 ) {
+    if(rastgele < 1 ) {
         int serit = GetRandomValue(0,2);
         for(int i=0; i < RAKIP_SAYISI; i++) {
             if(!oyun->rakipler[i].aktif) {
+                oyun->rakipler[i].dokuIndeksi = GetRandomValue(1, 8);
                 //Rakibi oluştur
                 Arac *rakip = &oyun->rakipler[i];
-                rakip->konum.width = 100;
-                rakip->konum.height = 150;
+                // rakip->konum.width = 100;
+                // rakip->konum.height = 150;
+                rakip->konum.width = arac_koordinat[oyun->rakipler[i].dokuIndeksi].width / 10.0;
+                rakip->konum.height = arac_koordinat[oyun->rakipler[i].dokuIndeksi].height / 10.0;
                 rakip->konum.x = serit * GENISLIK / 3 + GENISLIK / 6 - 50;
                 rakip->konum.y = -150;
                 rakip->aktif = true;
-                rakip->renk = renkler[GetRandomValue(0,2)];
+                //rakip->renk = renkler[GetRandomValue(0,2)];
+                break;
             }
         }
     }
@@ -77,7 +105,10 @@ void rakipGuncelle(Oyun *oyun) {
 void rakipCizdir(Oyun *oyun) {
     for(int i=0; i < RAKIP_SAYISI; i++) {
         if(oyun->rakipler[i].aktif) {
-            DrawRectangleRec(oyun->rakipler[i].konum, oyun->rakipler[i].renk);
+            //DrawRectangleRec(oyun->rakipler[i].konum, oyun->rakipler[i].renk);
+            DrawTexturePro(oyun->doku, arac_koordinat[oyun->rakipler[i].dokuIndeksi],
+            oyun->rakipler[i].konum, (Vector2) {0,0},
+            0.0f, RAYWHITE);
         }
     }
 }
@@ -116,6 +147,7 @@ int main(int argc, char const *argv[])
     oyunuSifirla(&oyun);
     InitWindow(GENISLIK, YUKSEKLIK, "Şube 2 Ambulans Oyunu");
     SetTargetFPS(60);
+    oyun.doku = LoadTexture("resources/vehicles.png");
     while(!WindowShouldClose()) {
         // Güncelleme işlemleri
         if (oyun.oyunDurumu) {
@@ -141,6 +173,7 @@ int main(int argc, char const *argv[])
         }
         EndDrawing();
     }
+    UnloadTexture(oyun.doku);
     CloseWindow();
     return 0;
 }
