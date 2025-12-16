@@ -4,7 +4,7 @@
 #define YUKSEKLIK 600
 #define ARAC_GENISLIK 100
 #define ARAC_YUKSEKLIK 150
-#define RAKIP_SAYISI 5
+#define RAKIP_SAYISI 2
 
 typedef struct arac {
     Rectangle konum;
@@ -20,6 +20,9 @@ typedef struct Oyun {
     bool oyunDurumu;
     int maxSkor;
     Texture2D doku;
+    Sound carpismaSesi;
+    Sound altinSesi;
+    int aracHizi;
 } Oyun;
 
 Rectangle arac_koordinat[] = {
@@ -49,9 +52,9 @@ void oyuncuSifirla(Oyun *oyun) {
 
 void oyuncuGuncelle(Oyun *oyun){
     if(IsKeyDown(KEY_LEFT))
-        oyun->oyuncu.konum.x -= 5;
+        oyun->oyuncu.konum.x -= oyun->aracHizi;
     if(IsKeyDown(KEY_RIGHT))
-        oyun->oyuncu.konum.x += 5;
+        oyun->oyuncu.konum.x += oyun->aracHizi;
     if(oyun->oyuncu.konum.x<0)
         oyun->oyuncu.konum.x=0;
     if(oyun->oyuncu.konum.x>GENISLIK-ARAC_GENISLIK)
@@ -84,25 +87,35 @@ void oyunSifirla(Oyun *oyun) {
     rakipSifirla(oyun);
     oyun->oyunDurumu = true;
     oyun->skor = 0;
+    oyun->aracHizi = 5;
 }
+
+bool rakipCarpisma(Oyun *oyun, Rectangle konum) {
+    for(int i = 0; i< RAKIP_SAYISI; i++) {
+        if(oyun->rakipler[i].aktif &&
+            CheckCollisionRecs(konum, oyun->rakipler[i].konum)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 void rakipOlustur(Oyun *oyun) {
     int ihtimal = GetRandomValue(0, 100);
-    Color renkler[] = {BLUE, RED, YELLOW, GREEN};
     if(ihtimal < 2) {
         for (int i=0; i < RAKIP_SAYISI; i++) {
             if (!oyun->rakipler[i].aktif) {
                 Arac *rakip = &oyun->rakipler[i];
                 rakip->dokuIndeksi = GetRandomValue(1,8);
                 int serit = GetRandomValue(0,2);
-                rakip->konum.y = -ARAC_YUKSEKLIK;
                 rakip->konum.x =serit * GENISLIK / 3 + GENISLIK / 6 - ARAC_GENISLIK / 2;
                 rakip->konum.width = arac_koordinat[rakip->dokuIndeksi].width / 10.0f;
                 rakip->konum.height = arac_koordinat[rakip->dokuIndeksi].height / 10.0f;
-                // rakip->konum.width = ARAC_GENISLIK;
-                // rakip->konum.height = ARAC_YUKSEKLIK;
-                //rakip->renk = renkler[GetRandomValue(0, 3)];
-                rakip->aktif = true;
+                rakip->konum.y = -rakip->konum.height;
+                if(!rakipCarpisma(oyun, rakip->konum)){
+                    rakip->aktif = true;
+                }
                 break;
             }
         }
@@ -112,10 +125,14 @@ void rakipOlustur(Oyun *oyun) {
 void rakipGuncelle(Oyun *oyun) {
     for(int i=0;i < RAKIP_SAYISI; i++) {
         if(oyun->rakipler[i].aktif) {
-            oyun->rakipler[i].konum.y += 5;
+            oyun->rakipler[i].konum.y += oyun->aracHizi;
             if(oyun->rakipler[i].konum.y > YUKSEKLIK) {
                 oyun->rakipler[i].aktif = false;
                 oyun->skor += 1;
+                if(oyun->skor % 5 == 0) {
+                    oyun->aracHizi++;
+                }
+                PlaySound(oyun->altinSesi);
             }
         }
     }
@@ -142,6 +159,7 @@ bool carpismaAlgila(Oyun *oyun) {
             oyun->oyunDurumu = false;
             if(oyun->skor > oyun->maxSkor)
                 oyun->maxSkor = oyun->skor;
+            PlaySound(oyun->carpismaSesi);
             return true;
         }
     }
@@ -160,14 +178,30 @@ int main(int argc, char const *argv[])
     oyun.maxSkor = 0;
     oyunSifirla(&oyun);
     InitWindow(GENISLIK, YUKSEKLIK, "Şube 1 Ambülans Oyunu");
+    InitAudioDevice();
+    oyun.carpismaSesi = LoadSound("resources/crash.mp3");
+    oyun.altinSesi = LoadSound("resources/gold-coin-sound.mp3");
+    Sound sirenSesi = LoadSound("resources/siren.mp3");
+    Music oyunMuzigi = LoadMusicStream("resources/music.mp3");
     SetTargetFPS(60);
     oyun.doku = LoadTexture("resources/vehicles.png");
+    PlayMusicStream(oyunMuzigi);
     while(!WindowShouldClose()) {
         if(oyun.oyunDurumu) {
             oyuncuGuncelle(&oyun);
             rakipOlustur(&oyun);
             rakipGuncelle(&oyun);
             carpismaAlgila(&oyun);
+            UpdateMusicStream(oyunMuzigi);
+            if(IsKeyDown(KEY_SPACE) && !IsSoundPlaying(sirenSesi)) {
+                PlaySound(sirenSesi);
+            }
+            if(IsKeyUp(KEY_SPACE) && IsSoundPlaying(sirenSesi)) {
+                StopSound(sirenSesi);
+            }
+        }
+        else if(IsSoundPlaying(sirenSesi)) {
+            StopSound(sirenSesi);
         }
         BeginDrawing();
         ClearBackground(GRAY);
@@ -182,12 +216,19 @@ int main(int argc, char const *argv[])
             DrawRectangle(0, 200, GENISLIK, 200, BLACK);
             DrawText("Oyun Bitti!", 150, 300, 48, RED );
             DrawText(skor, 100,  350, 36, YELLOW);
-            if(IsKeyPressed(KEY_ENTER))
+            if(IsKeyPressed(KEY_ENTER)) {
                 oyunSifirla(&oyun);
+                SeekMusicStream(oyunMuzigi, 0.0f);
+            }
         }
         EndDrawing();
     }
     UnloadTexture(oyun.doku);
+    UnloadMusicStream(oyunMuzigi);
+    UnloadSound(sirenSesi);
+    UnloadSound(oyun.carpismaSesi);
+    UnloadSound(oyun.altinSesi);
+    CloseAudioDevice();
     CloseWindow();
 
     return 0;

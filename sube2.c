@@ -18,6 +18,8 @@ typedef struct oyun
     bool oyunDurumu;
     int skor;
     Texture2D doku;
+    Sound altinSesi;
+    Sound carpmaSesi;
 } Oyun;
 
 Rectangle arac_koordinat[] = {
@@ -96,6 +98,7 @@ void rakipGuncelle(Oyun *oyun) {
             if(oyun->rakipler[i].konum.y > YUKSEKLIK) {
                 oyun->rakipler[i].aktif = false; // Ekrandan çıktı
                 oyun->skor += 1;
+                PlaySound(oyun->altinSesi);
                 break;
             }
         }
@@ -118,6 +121,7 @@ bool carpismaAlgila(Oyun *oyun) {
         if(oyun->rakipler[i].aktif &&
             CheckCollisionRecs(oyun->oyuncu.konum, oyun->rakipler[i].konum)) {
                 oyun->oyunDurumu = false;
+                PlaySound(oyun->carpmaSesi);
             return true;
         }
     }
@@ -147,7 +151,12 @@ int main(int argc, char const *argv[])
     oyunuSifirla(&oyun);
     InitWindow(GENISLIK, YUKSEKLIK, "Şube 2 Ambulans Oyunu");
     SetTargetFPS(60);
+    InitAudioDevice();
     oyun.doku = LoadTexture("resources/vehicles.png");
+    Music oyunMuzigi = LoadMusicStream("resources/music.mp3");
+    oyun.altinSesi = LoadSound("resources/gold-coin-sound.mp3");
+    oyun.carpmaSesi = LoadSound("resources/crash.mp3");
+    PlayMusicStream(oyunMuzigi);
     while(!WindowShouldClose()) {
         // Güncelleme işlemleri
         if (oyun.oyunDurumu) {
@@ -155,6 +164,7 @@ int main(int argc, char const *argv[])
             rakipOlustur(&oyun);
             rakipGuncelle(&oyun);
             carpismaAlgila(&oyun);
+            UpdateMusicStream(oyunMuzigi);
         }
         // Çizim işlemleri
         BeginDrawing();
@@ -169,10 +179,15 @@ int main(int argc, char const *argv[])
             DrawText("Enter -> Yeniden Baslat", 10, YUKSEKLIK / 2 + 100, 36, RED);
             if(IsKeyPressed(KEY_ENTER)) {
                 oyunuSifirla(&oyun);
+                SeekMusicStream(oyunMuzigi, 0);
             }
         }
         EndDrawing();
     }
+    UnloadMusicStream(oyunMuzigi);
+    UnloadSound(oyun.altinSesi);
+    UnloadSound(oyun.carpmaSesi);
+    CloseAudioDevice();
     UnloadTexture(oyun.doku);
     CloseWindow();
     return 0;
